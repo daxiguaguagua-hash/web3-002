@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, MoreHorizontal, TrendingDown, ShoppingBag, Utensils, Car, Zap, Lightbulb } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, TrendingDown, ShoppingBag, Lightbulb } from 'lucide-react';
 import { MOCK_BUDGETS } from '../constants';
 
 export const AnalyticsView: React.FC = () => {
@@ -37,20 +37,13 @@ export const AnalyticsView: React.FC = () => {
             </div>
           </div>
         </div>
-
         <div className="grid grid-cols-2 gap-x-8 gap-y-3 mt-6 pt-6 border-t border-slate-50 w-full">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-mint" />
-              <span className="text-[13px] text-muted">Shopping</span>
-            </div>
+            <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-mint" /><span className="text-[13px] text-muted">Shopping</span></div>
             <span className="text-[13px] font-semibold">45%</span>
           </div>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-forest" />
-              <span className="text-[13px] text-muted">Housing</span>
-            </div>
+            <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-forest" /><span className="text-[13px] text-muted">Housing</span></div>
             <span className="text-[13px] font-semibold">25%</span>
           </div>
         </div>
@@ -61,7 +54,6 @@ export const AnalyticsView: React.FC = () => {
           <h2 className="font-display font-semibold text-xl text-ink">Budget Status</h2>
           <button className="text-mint text-sm font-medium">Edit Limits</button>
         </div>
-
         <div className="space-y-4">
           {MOCK_BUDGETS.map((budget) => (
             <div key={budget.category} className="bg-white p-4 rounded-2xl border border-slate-50">
@@ -81,17 +73,14 @@ export const AnalyticsView: React.FC = () => {
                 </div>
               </div>
               <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full ${budget.spent > budget.limit ? 'bg-red-500' : 'bg-mint'}`} 
-                  style={{ width: `${Math.min((budget.spent / budget.limit) * 100, 100)}%` }} 
-                />
+                <div className={`h-full rounded-full ${budget.spent > budget.limit ? 'bg-red-500' : 'bg-mint'}`} style={{ width: `${Math.min((budget.spent / budget.limit) * 100, 100)}%` }} />
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="bg-forest text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+      <section className="bg-forest text-white p-5 rounded-2xl shadow-lg">
         <div className="flex gap-4">
           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-mint/20 flex items-center justify-center text-mint">
             <Lightbulb size={20} />

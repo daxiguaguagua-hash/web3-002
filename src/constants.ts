@@ -11,10 +11,10 @@ export const CATEGORIES: { name: Category; icon: string; color: string }[] = [
 ];
 
 export const MOCK_TRANSACTIONS = [
-  { id: '1', title: 'Whole Foods Market', amount: 142.80, category: 'Groceries', date: 'Today, 5:42 PM', type: 'expense' },
-  { id: '2', title: 'Freelance Payment', amount: 2400.00, category: 'Income', date: 'Yesterday', type: 'income' },
-  { id: '3', title: 'Netflix Subscription', amount: 15.99, category: 'Entertainment', date: 'Oct 21', type: 'expense' },
-  { id: '4', title: 'Starbucks', amount: 6.50, category: 'Dining', date: 'Oct 20', type: 'expense' },
+  { id: '1', title: 'Whole Foods Market', amount: 142.80, category: 'Groceries', date: 'TODAY, 5:42 PM', type: 'expense' },
+  { id: '2', title: 'Freelance Payment', amount: 2400.00, category: 'Income', date: 'YESTERDAY', type: 'income' },
+  { id: '3', title: 'Netflix Subscription', amount: 15.99, category: 'Entertainment', date: 'OCT 21', type: 'expense' },
+  { id: '4', title: 'Starbucks', amount: 6.50, category: 'Dining', date: 'OCT 20', type: 'expense' },
 ];
 
 export const MOCK_FAMILY_MEMBERS = [

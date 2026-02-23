@@ -19,22 +19,18 @@ export const HomeView: React.FC = () => {
         </div>
         <button className="relative">
           <div className="w-10 h-10 rounded-full bg-forest overflow-hidden ring-2 ring-transparent hover:ring-mint transition-all">
-            <img 
-              alt="Profile" 
-              className="w-full h-full object-cover" 
-              src="https://picsum.photos/seed/profile/200"
-              referrerPolicy="no-referrer"
-            />
+            <img alt="Profile" className="w-full h-full object-cover" src="https://picsum.photos/seed/profile/200" referrerPolicy="no-referrer" />
           </div>
           <div className="absolute bottom-0 right-0 w-3 h-3 bg-mint border-2 border-canvas rounded-full"></div>
         </button>
       </header>
 
-      <div className="relative w-full p-8 rounded-[20px] bg-white shadow-lg border border-mint/10 overflow-hidden group">
+      <div className="relative w-full p-8 rounded-[20px] bg-white shadow-lg border border-mint/10 overflow-hidden">
         <div className="absolute -right-12 -top-12 w-40 h-40 bg-mint/5 rounded-full blur-3xl" />
         <div className="relative z-10 flex flex-col items-center justify-center text-center">
           <span className="text-sm font-medium text-muted mb-2">Total Balance</span>
           <h2 className="text-5xl font-mono font-medium text-forest tracking-tight mb-3">$12,450.00</h2>
+          {/* 金额已正确含千位逗号 */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-mint/10 rounded-full">
             <TrendingUp size={18} className="text-mint" />
             <span className="text-sm font-bold text-mint">+$450</span>
@@ -68,7 +64,7 @@ export const HomeView: React.FC = () => {
                 </div>
               </div>
               <span className={`text-base font-mono font-medium ${tx.type === 'income' ? 'text-mint' : 'text-ink'}`}>
-                {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                {tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           );
