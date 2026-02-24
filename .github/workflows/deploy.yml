@@ -130,26 +130,26 @@ jobs:
               --name "$NEW" \
               --restart unless-stopped \
               -p "${HOST_PORT}:${CONTAINER_PORT}" \
-              --health-cmd="wget -qO- http://localhost/healthz || exit 1" \
-              --health-interval=10s \
-              --health-timeout=5s \
-              --health-retries=3 \
+              --health-cmd="curl -fs http://localhost/healthz || exit 1" \
+              --health-interval=5s \
+              --health-timeout=3s \
+              --health-retries=5 \
               --health-start-period=30s \
               "$IMAGE_FULL"
 
-            # ── 4. 等待健康检查通过（最多 60s）───────
+            # ── 4. 等待健康检查通过（最多 120s）──────
             echo "▶ 等待健康检查..."
-            for i in $(seq 1 12); do
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$NEW" 2>/dev/null || echo "unknown")
-              echo "  [${i}/12] $STATUS"
-              [ "$STATUS" = "healthy" ] && break
-              if [ $i -eq 12 ]; then
+            SECONDS=0
+            until [ "$(docker inspect --format='{{.State.Health.Status}}' "$NEW")" = "healthy" ]; do
+              if [ $SECONDS -ge 120 ]; then
                 echo "❌ 健康检查超时，回滚"
                 docker stop "$NEW" && docker rm "$NEW"
                 exit 1
               fi
-              sleep 5
+              echo "  等待中... ${SECONDS}s / 120s"
+              sleep 3
             done
+            echo "✅ 健康检查通过，耗时 ${SECONDS}s"
 
             # ── 5. 停止旧容器 ────────────────────────
             echo "▶ 停止旧容器..."
