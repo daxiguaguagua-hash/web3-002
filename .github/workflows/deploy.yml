@@ -134,7 +134,7 @@ jobs:
               --health-interval=10s \
               --health-timeout=5s \
               --health-retries=3 \
-              --health-start-period=15s \
+              --health-start-period=30s \
               "$IMAGE_FULL"
 
             # ── 4. 等待健康检查通过（最多 60s）───────
