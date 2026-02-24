@@ -19,6 +19,10 @@
     "api-design": {
       "description": "API 设计审查：RESTful规范、响应格式、一致性",
       "file": "skills/api-design.md"
+    },
+    "devops": {
+      "description": "Docker + GitHub Actions + AWS EC2 完整部署流程，包含所有已知坑和解决方案",
+      "file": "skills/devops.md"
     }
   }
 }
