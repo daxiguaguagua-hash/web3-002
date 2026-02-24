@@ -123,7 +123,17 @@ jobs:
             echo "▶ 拉取镜像: $IMAGE_FULL"
             docker pull "$IMAGE_FULL"
 
-            # ── 3. 启动新容器（临时名称）─────────────
+            # ── 3. 停掉所有占用端口的旧容器 ─────────
+            echo "▶ 停止占用 ${HOST_PORT} 端口的旧容器..."
+            OLD_CONTAINERS=$(docker ps -q --filter "publish=${HOST_PORT}" || true)
+            if [ -n "$OLD_CONTAINERS" ]; then
+              docker stop $OLD_CONTAINERS && docker rm $OLD_CONTAINERS
+              echo "  已停止旧容器"
+            else
+              echo "  无旧容器"
+            fi
+
+            # ── 4. 启动新容器 ────────────────────────
             NEW="${CONTAINER_NAME}-${GIT_SHA:0:7}"
             echo "▶ 启动新容器: $NEW"
             docker run -d \
@@ -137,7 +147,7 @@ jobs:
               --health-start-period=30s \
               "$IMAGE_FULL"
 
-            # ── 4. 等待健康检查通过（最多 120s）──────
+            # ── 5. 等待健康检查通过（最多 120s）──────
             echo "▶ 等待健康检查..."
             SECONDS=0
             until [ "$(docker inspect --format='{{.State.Health.Status}}' "$NEW")" = "healthy" ]; do
@@ -150,14 +160,6 @@ jobs:
               sleep 3
             done
             echo "✅ 健康检查通过，耗时 ${SECONDS}s"
-
-            # ── 5. 停止旧容器 ────────────────────────
-            echo "▶ 停止旧容器..."
-            NEW_ID=$(docker inspect -f '{{.Id}}' "$NEW")
-            OLD=$(docker ps -q --filter "name=${CONTAINER_NAME}" | grep -v "$NEW_ID" || true)
-            if [ -n "$OLD" ]; then
-              docker stop $OLD && docker rm $OLD
-            fi
 
             # 重命名为标准容器名，方便后续日志查看
             docker rename "$NEW" "$CONTAINER_NAME" 2>/dev/null || true
