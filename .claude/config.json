@@ -1,0 +1,24 @@
+{
+  "skills": {
+    "code-review": {
+      "description": "前端代码审查：类型安全、性能优化、代码质量、样式规范",
+      "file": "skills/code-review.md"
+    },
+    "test-gen": {
+      "description": "自动生成测试用例：组件、Hook、工具函数",
+      "file": "skills/test-gen.md"
+    },
+    "refactor": {
+      "description": "代码重构建议：组件拆分、状态管理、性能优化",
+      "file": "skills/refactor.md"
+    },
+    "standup": {
+      "description": "生成每日站会汇报",
+      "file": "skills/standup.md"
+    },
+    "api-design": {
+      "description": "API 设计审查：RESTful规范、响应格式、一致性",
+      "file": "skills/api-design.md"
+    }
+  }
+}
