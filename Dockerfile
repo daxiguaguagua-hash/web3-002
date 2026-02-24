@@ -28,7 +28,7 @@ RUN pnpm run build
 
 # ─── Stage 2: Serve ───────────────────────────────────────────────────────────
 # 最终镜像只包含 nginx + dist 静态文件，不含 Node.js / 源码 / node_modules
-FROM nginx:1.27-alpine AS runner
+FROM nginx:1.26-alpine AS runner
 
 # 安装 curl（用于健康检查）并移除默认站点配置
 RUN apk add --no-cache curl && rm /etc/nginx/conf.d/default.conf
