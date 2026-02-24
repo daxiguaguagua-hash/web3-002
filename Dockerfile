@@ -30,8 +30,8 @@ RUN pnpm run build
 # 最终镜像只包含 nginx + dist 静态文件，不含 Node.js / 源码 / node_modules
 FROM nginx:1.27-alpine AS runner
 
-# 移除默认站点配置
-RUN rm /etc/nginx/conf.d/default.conf
+# 安装 curl（用于健康检查）并移除默认站点配置
+RUN apk add --no-cache curl && rm /etc/nginx/conf.d/default.conf
 
 # 注入自定义 Nginx 配置
 COPY nginx.conf /etc/nginx/conf.d/app.conf
@@ -47,6 +47,6 @@ EXPOSE 80
 
 # 健康检查：/healthz 由 nginx.conf 定义
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost/healthz || exit 1
+  CMD curl -fs http://localhost/healthz || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
