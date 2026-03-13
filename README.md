@@ -21,3 +21,4 @@ View your app in AI Studio: https://ai.studio/apps/55f5e3a6-72f8-4a0d-a282-39eb2
 
 4. just for re-run test.
 5. deployment verification trigger on 2026-03-13.
+6. deployment retry after SSH key rotation on 2026-03-13.
