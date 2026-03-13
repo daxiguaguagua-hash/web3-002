@@ -1,7 +1,7 @@
 # ─── Stage 1: Build ───────────────────────────────────────────────────────────
 # @vitejs/plugin-react@5.1.4 requires node ^20.19.0 || >=22.12.0
-# node:22-alpine 始终满足 >=22.12.0，是最安全的选择
-FROM node:22-alpine AS builder
+# As of 2026-03-13, Node.js 24 is the latest Active LTS release.
+FROM node:24-alpine AS builder
 
 # 安装 pnpm v9（与 pnpm-lock.yaml lockfileVersion: '9.0' 严格对应）
 RUN corepack enable && corepack prepare pnpm@9 --activate
