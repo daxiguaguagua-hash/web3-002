@@ -1,8 +1,66 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, MoreHorizontal, TrendingDown, ShoppingBag, Lightbulb } from 'lucide-react';
-import { MOCK_BUDGETS } from '../constants';
+import { budgetApi } from '../api';
+import { Budget } from '../types';
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+const SkeletonBudgetRow: React.FC = () => (
+  <div className="bg-white p-4 rounded-2xl border border-slate-50 animate-pulse">
+    <div className="flex justify-between items-start mb-3">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-slate-100" />
+        <div className="flex flex-col gap-2">
+          <div className="w-24 h-3.5 bg-slate-100 rounded-full" />
+          <div className="w-16 h-2.5 bg-slate-100 rounded-full" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 items-end">
+        <div className="w-16 h-3.5 bg-slate-100 rounded-full" />
+        <div className="w-12 h-2.5 bg-slate-100 rounded-full" />
+      </div>
+    </div>
+    <div className="h-2 w-full bg-slate-100 rounded-full" />
+  </div>
+);
+
+const ErrorBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+  <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+    <span className="text-4xl">⚠️</span>
+    <p className="text-sm text-slate-500">Could not load budget data.</p>
+    <button
+      onClick={onRetry}
+      className="px-4 py-2 text-sm font-semibold text-mint border border-mint/30 rounded-full hover:bg-mint/5 transition-colors"
+    >
+      Try again
+    </button>
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export const AnalyticsView: React.FC = () => {
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchBudgets = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await budgetApi.list();
+      setBudgets(data);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBudgets();
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-center justify-between py-2">
@@ -55,7 +113,17 @@ export const AnalyticsView: React.FC = () => {
           <button className="text-mint text-sm font-medium">Edit Limits</button>
         </div>
         <div className="space-y-4">
-          {MOCK_BUDGETS.map((budget) => (
+          {loading && (
+            <>
+              <SkeletonBudgetRow />
+              <SkeletonBudgetRow />
+              <SkeletonBudgetRow />
+            </>
+          )}
+
+          {!loading && error && <ErrorBanner onRetry={fetchBudgets} />}
+
+          {!loading && !error && budgets.map((budget) => (
             <div key={budget.category} className="bg-white p-4 rounded-2xl border border-slate-50">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
@@ -73,7 +141,10 @@ export const AnalyticsView: React.FC = () => {
                 </div>
               </div>
               <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full ${budget.spent > budget.limit ? 'bg-red-500' : 'bg-mint'}`} style={{ width: `${Math.min((budget.spent / budget.limit) * 100, 100)}%` }} />
+                <div
+                  className={`h-full rounded-full ${budget.spent > budget.limit ? 'bg-red-500' : 'bg-mint'}`}
+                  style={{ width: `${Math.min((budget.spent / budget.limit) * 100, 100)}%` }}
+                />
               </div>
             </div>
           ))}

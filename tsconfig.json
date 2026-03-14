@@ -11,6 +11,7 @@
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "paths": { "@/*": ["./*"] }
+    "paths": { "@/*": ["./*"] },
+    "types": ["vite/client"]
   }
 }

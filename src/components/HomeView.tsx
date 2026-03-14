@@ -1,21 +1,89 @@
-import React from 'react';
-import { TrendingUp, ShoppingBasket, Banknote, Film, Coffee } from 'lucide-react';
-import { MOCK_TRANSACTIONS } from '../constants';
+import React, { useEffect, useState } from 'react';
+import { TrendingUp, ShoppingBasket, Banknote, Film, Coffee, LucideProps } from 'lucide-react';
+import { transactionsApi } from '../api';
+import { Transaction } from '../types';
 
-const ICON_MAP: Record<string, any> = {
-  'Groceries': ShoppingBasket,
-  'Income': Banknote,
-  'Entertainment': Film,
-  'Dining': Coffee,
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type IconComponent = React.ComponentType<LucideProps>;
+
+const ICON_MAP: Record<string, IconComponent> = {
+  Groceries: ShoppingBasket,
+  Income: Banknote,
+  Entertainment: Film,
+  Dining: Coffee,
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Returns a human-readable day + date string based on today's actual date. */
+export function getTodayLabel(): { weekday: string; dayMonth: string } {
+  const now = new Date();
+  const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const dayMonth = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return { weekday, dayMonth };
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+const SkeletonRow: React.FC = () => (
+  <div className="flex items-center justify-between p-4 bg-white rounded-[20px] border border-transparent animate-pulse">
+    <div className="flex items-center gap-4">
+      <div className="w-12 h-12 rounded-full bg-slate-100" />
+      <div className="flex flex-col gap-2">
+        <div className="w-32 h-3.5 bg-slate-100 rounded-full" />
+        <div className="w-20 h-2.5 bg-slate-100 rounded-full" />
+      </div>
+    </div>
+    <div className="w-16 h-3.5 bg-slate-100 rounded-full" />
+  </div>
+);
+
+const ErrorBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+  <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+    <span className="text-4xl">⚠️</span>
+    <p className="text-sm text-slate-500">Could not load transactions.</p>
+    <button
+      onClick={onRetry}
+      className="px-4 py-2 text-sm font-semibold text-mint border border-mint/30 rounded-full hover:bg-mint/5 transition-colors"
+    >
+      Try again
+    </button>
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export const HomeView: React.FC = () => {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const { weekday, dayMonth } = getTodayLabel();
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await transactionsApi.list();
+      setTransactions(data);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-center justify-between py-2">
         <div className="flex flex-col">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted font-display">Tuesday</span>
-          <h1 className="text-2xl font-bold font-display text-ink leading-none mt-1">Oct 24</h1>
+          <span className="text-xs font-bold uppercase tracking-wider text-muted font-display">{weekday}</span>
+          <h1 className="text-2xl font-bold font-display text-ink leading-none mt-1">{dayMonth}</h1>
         </div>
         <button className="relative">
           <div className="w-10 h-10 rounded-full bg-forest overflow-hidden ring-2 ring-transparent hover:ring-mint transition-all">
@@ -30,7 +98,6 @@ export const HomeView: React.FC = () => {
         <div className="relative z-10 flex flex-col items-center justify-center text-center">
           <span className="text-sm font-medium text-muted mb-2">Total Balance</span>
           <h2 className="text-5xl font-mono font-medium text-forest tracking-tight mb-3">$12,450.00</h2>
-          {/* 金额已正确含千位逗号 */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-mint/10 rounded-full">
             <TrendingUp size={18} className="text-mint" />
             <span className="text-sm font-bold text-mint">+$450</span>
@@ -50,8 +117,18 @@ export const HomeView: React.FC = () => {
           <button className="text-sm font-medium text-mint hover:text-mint-dark">View All</button>
         </div>
 
-        {MOCK_TRANSACTIONS.map((tx) => {
-          const Icon = ICON_MAP[tx.category] || ShoppingBasket;
+        {loading && (
+          <div className="flex flex-col gap-3">
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </div>
+        )}
+
+        {!loading && error && <ErrorBanner onRetry={fetchTransactions} />}
+
+        {!loading && !error && transactions.map((tx) => {
+          const Icon: IconComponent = ICON_MAP[tx.category] ?? ShoppingBasket;
           return (
             <div key={tx.id} className="group flex items-center justify-between p-4 bg-white rounded-[20px] hover:shadow-md transition-all border border-transparent hover:border-mint/10 cursor-pointer">
               <div className="flex items-center gap-4">

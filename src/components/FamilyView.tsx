@@ -1,8 +1,57 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Bell, Edit, Plus, EyeOff, Wallet, Trash2 } from 'lucide-react';
-import { MOCK_FAMILY_MEMBERS } from '../constants';
+import { familyApi } from '../api';
+import { FamilyMember } from '../types';
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+const SkeletonMemberCard: React.FC = () => (
+  <div className="shrink-0 w-[140px] bg-white rounded-xl p-4 flex flex-col items-center gap-3 shadow-sm border border-slate-100 animate-pulse">
+    <div className="w-16 h-16 rounded-full bg-slate-100" />
+    <div className="flex flex-col items-center gap-2 w-full">
+      <div className="w-16 h-3.5 bg-slate-100 rounded-full" />
+      <div className="w-10 h-2.5 bg-slate-100 rounded-full" />
+    </div>
+  </div>
+);
+
+const ErrorBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+  <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+    <span className="text-4xl">⚠️</span>
+    <p className="text-sm text-slate-500">Could not load members.</p>
+    <button
+      onClick={onRetry}
+      className="px-4 py-2 text-sm font-semibold text-mint border border-mint/30 rounded-full hover:bg-mint/5 transition-colors"
+    >
+      Try again
+    </button>
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export const FamilyView: React.FC = () => {
+  const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchMembers = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await familyApi.getMembers();
+      setMembers(data);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
   return (
     <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between py-2">
@@ -25,7 +74,9 @@ export const FamilyView: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-mint animate-pulse"></span>Active Budget
               </span>
               <h2 className="text-white font-display text-3xl font-bold leading-tight">The Smiths</h2>
-              <p className="text-white/80 font-medium text-sm mt-1">4 Members • Combined Budget Active</p>
+              <p className="text-white/80 font-medium text-sm mt-1">
+                {loading ? '— Members' : `${members.length} Members`} • Combined Budget Active
+              </p>
             </div>
             <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/30 transition-all">
               <Edit size={20} />
@@ -40,7 +91,17 @@ export const FamilyView: React.FC = () => {
           <button className="text-mint text-sm font-medium">Manage Roles</button>
         </div>
         <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4">
-          {MOCK_FAMILY_MEMBERS.map((member) => (
+          {loading && (
+            <>
+              <SkeletonMemberCard />
+              <SkeletonMemberCard />
+              <SkeletonMemberCard />
+            </>
+          )}
+
+          {!loading && error && <ErrorBanner onRetry={fetchMembers} />}
+
+          {!loading && !error && members.map((member) => (
             <div key={member.id} className="shrink-0 w-[140px] bg-white rounded-xl p-4 flex flex-col items-center gap-3 shadow-sm border border-slate-100 relative">
               {member.status === 'online' && (
                 <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-mint rounded-full ring-2 ring-white"></div>
@@ -56,10 +117,13 @@ export const FamilyView: React.FC = () => {
               </div>
             </div>
           ))}
-          <button className="shrink-0 w-[140px] h-[168px] rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors group">
-            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-muted group-hover:text-mint transition-colors"><Plus size={24} /></div>
-            <span className="font-medium text-xs text-muted group-hover:text-mint">Add New</span>
-          </button>
+
+          {!loading && !error && (
+            <button className="shrink-0 w-[140px] h-[168px] rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors group">
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-muted group-hover:text-mint transition-colors"><Plus size={24} /></div>
+              <span className="font-medium text-xs text-muted group-hover:text-mint">Add New</span>
+            </button>
+          )}
         </div>
       </section>
 
