@@ -30,10 +30,24 @@ const ErrorBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const FamilyView: React.FC = () => {
+interface FamilyViewProps {
+  onBackHome?: () => void;
+  onShowNotice?: (message: string) => void;
+}
+
+const nextRole = (role: FamilyMember['role']): FamilyMember['role'] => {
+  if (role === 'Admin') return 'Member';
+  if (role === 'Member') return 'Child';
+  return 'Admin';
+};
+
+export const FamilyView: React.FC<FamilyViewProps> = ({ onBackHome, onShowNotice }) => {
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [canViewHiddenLedger, setCanViewHiddenLedger] = useState(false);
+  const [canEditSharedBudget, setCanEditSharedBudget] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -41,6 +55,7 @@ export const FamilyView: React.FC = () => {
     try {
       const data = await familyApi.getMembers();
       setMembers(data);
+      setConfirmDelete(false);
     } catch {
       setError(true);
     } finally {
@@ -52,14 +67,41 @@ export const FamilyView: React.FC = () => {
     fetchMembers();
   }, []);
 
+  const handleAddMember = () => {
+    const newMemberNumber = members.length + 1;
+    setMembers((current) => [
+      ...current,
+      {
+        id: `demo-${Date.now()}`,
+        name: `Guest ${newMemberNumber}`,
+        role: 'Member',
+        avatar: `https://picsum.photos/seed/guest-${newMemberNumber}/200`,
+        status: 'online',
+      },
+    ]);
+    onShowNotice?.('Added a demo family member card.');
+  };
+
+  const handleManageRoles = () => {
+    setMembers((current) =>
+      current.map((member, index) =>
+        index === 0 ? { ...member, role: nextRole(member.role) } : member,
+      ),
+    );
+    onShowNotice?.('Rotated the first member role for demo purposes.');
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between py-2">
         <div className="flex items-center gap-3">
-          <button className="p-2 -ml-2 rounded-full hover:bg-slate-100 transition-colors"><ArrowLeft size={28} /></button>
+          <button className="p-2 -ml-2 rounded-full hover:bg-slate-100 transition-colors" onClick={onBackHome}><ArrowLeft size={28} /></button>
           <h1 className="font-display font-bold text-2xl tracking-tight">Family Hub</h1>
         </div>
-        <button className="p-2 rounded-full hover:bg-slate-100 relative">
+        <button
+          className="p-2 rounded-full hover:bg-slate-100 relative"
+          onClick={() => onShowNotice?.('Family alerts are part of the native notification flow.')}
+        >
           <Bell size={24} />
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-canvas"></span>
         </button>
@@ -78,7 +120,10 @@ export const FamilyView: React.FC = () => {
                 {loading ? '— Members' : `${members.length} Members`} • Combined Budget Active
               </p>
             </div>
-            <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/30 transition-all">
+            <button
+              className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/30 transition-all"
+              onClick={() => onShowNotice?.('Family profile editing is stubbed in the web demo.')}
+            >
               <Edit size={20} />
             </button>
           </div>
@@ -88,7 +133,7 @@ export const FamilyView: React.FC = () => {
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-lg font-semibold text-ink">Members</h3>
-          <button className="text-mint text-sm font-medium">Manage Roles</button>
+          <button className="text-mint text-sm font-medium" onClick={handleManageRoles}>Manage Roles</button>
         </div>
         <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4">
           {loading && (
@@ -119,7 +164,10 @@ export const FamilyView: React.FC = () => {
           ))}
 
           {!loading && !error && (
-            <button className="shrink-0 w-[140px] h-[168px] rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors group">
+            <button
+              className="shrink-0 w-[140px] h-[168px] rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors group"
+              onClick={handleAddMember}
+            >
               <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-muted group-hover:text-mint transition-colors"><Plus size={24} /></div>
               <span className="font-medium text-xs text-muted group-hover:text-mint">Add New</span>
             </button>
@@ -138,8 +186,11 @@ export const FamilyView: React.FC = () => {
                 <span className="text-xs text-muted leading-tight">Allow members to see private assets</span>
               </div>
             </div>
-            <button className="w-12 h-6 rounded-full bg-slate-200 relative transition-colors">
-              <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform"></span>
+            <button
+              className={`w-12 h-6 rounded-full relative transition-colors ${canViewHiddenLedger ? 'bg-mint' : 'bg-slate-200'}`}
+              onClick={() => setCanViewHiddenLedger((current) => !current)}
+            >
+              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${canViewHiddenLedger ? 'right-1' : 'left-1'}`}></span>
             </button>
           </div>
           <div className="p-4 flex items-center justify-between">
@@ -150,14 +201,43 @@ export const FamilyView: React.FC = () => {
                 <span className="text-xs text-muted leading-tight">Admins can modify monthly limits</span>
               </div>
             </div>
-            <button className="w-12 h-6 rounded-full bg-mint relative transition-colors">
-              <span className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform"></span>
+            <button
+              className={`w-12 h-6 rounded-full relative transition-colors ${canEditSharedBudget ? 'bg-mint' : 'bg-slate-200'}`}
+              onClick={() => setCanEditSharedBudget((current) => !current)}
+            >
+              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${canEditSharedBudget ? 'right-1' : 'left-1'}`}></span>
             </button>
           </div>
         </div>
-        <button className="mt-4 w-full py-4 px-6 text-red-500 font-bold text-sm flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
-          <Trash2 size={18} />Delete Family Group
-        </button>
+        {confirmDelete ? (
+          <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4">
+            <p className="text-sm text-red-600">Demo safeguard: destructive family deletion is intentionally blocked on web.</p>
+            <div className="mt-3 flex gap-3">
+              <button
+                className="flex-1 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-ink"
+                onClick={() => setConfirmDelete(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-xl bg-red-500 px-4 py-3 text-sm font-semibold text-white"
+                onClick={() => {
+                  setConfirmDelete(false);
+                  onShowNotice?.('Delete requires the native admin flow and is blocked in the web demo.');
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            className="mt-4 w-full py-4 px-6 text-red-500 font-bold text-sm flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 size={18} />Delete Family Group
+          </button>
+        )}
       </section>
     </div>
   );

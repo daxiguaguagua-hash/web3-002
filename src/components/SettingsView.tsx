@@ -1,28 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bell, ChevronRight, Lock, EyeOff, Fingerprint, Moon, Pin, Users, LogOut, RefreshCw } from 'lucide-react';
 
 interface SettingsViewProps {
   isPrivacyUnlocked?: boolean;
   onOpenPrivacy?: () => void;
   onShowFxDemo?: () => void;
+  onNavigateFamily?: () => void;
+  onShowNotice?: (message: string) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   isPrivacyUnlocked = false,
   onOpenPrivacy,
   onShowFxDemo,
+  onNavigateFamily,
+  onShowNotice,
 }) => {
+  const [appearance, setAppearance] = useState<'Light' | 'System' | 'Dark'>('Light');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+  const cycleAppearance = () => {
+    setAppearance((current) => {
+      if (current === 'Light') return 'System';
+      if (current === 'System') return 'Dark';
+      return 'Light';
+    });
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between py-2">
         <h1 className="font-display text-2xl font-bold tracking-tight text-forest">Settings</h1>
-        <button className="p-2 rounded-full hover:bg-mint/10 text-forest transition-colors">
+        <button
+          className="p-2 rounded-full hover:bg-mint/10 text-forest transition-colors"
+          onClick={() => onShowNotice?.('Notification center is not wired in the web demo yet.')}
+        >
           <Bell size={24} />
         </button>
       </header>
 
       {/* Profile Card */}
-      <div className="bg-white rounded-[20px] shadow-sm p-5 flex items-center gap-4 relative overflow-hidden">
+      <button
+        className="bg-white rounded-[20px] shadow-sm p-5 flex items-center gap-4 relative overflow-hidden text-left"
+        onClick={() => onShowNotice?.('Profile editing is available in the native app flow.')}
+      >
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-mint/20 to-transparent rounded-bl-full -mr-8 -mt-8" />
         <div className="relative">
           <img
@@ -40,7 +61,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <p className="text-muted text-sm font-medium">alex.j@example.com</p>
         </div>
         <ChevronRight size={20} className="text-mint" />
-      </div>
+      </button>
 
       {/* Privacy Zone */}
       <section>
@@ -82,7 +103,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </button>
 
           {/* Change PIN */}
-          <button className="w-full text-left p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+          <button
+            className="w-full text-left p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
+            onClick={() => {
+              if (!isPrivacyUnlocked) {
+                onOpenPrivacy?.();
+                return;
+              }
+              onShowNotice?.('PIN changes are handled in the native security settings flow.');
+            }}
+          >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-muted">
                 <Pin size={20} />
@@ -98,7 +128,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section>
         <h3 className="font-display text-sm font-bold text-muted tracking-wider uppercase px-2 mb-2">Preferences</h3>
         <div className="bg-white rounded-[20px] shadow-sm overflow-hidden divide-y divide-slate-50">
-          <button className="w-full text-left p-4 hover:bg-slate-50 transition-colors flex items-center justify-between">
+          <button className="w-full text-left p-4 hover:bg-slate-50 transition-colors flex items-center justify-between" onClick={cycleAppearance}>
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-ink">
                 <Moon size={20} />
@@ -106,7 +136,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <p className="font-medium text-ink text-[15px]">Appearance</p>
             </div>
             <div className="flex items-center gap-1 text-muted">
-              <span className="text-sm">Light</span>
+              <span className="text-sm">{appearance}</span>
               <ChevronRight size={20} className="text-slate-200" />
             </div>
           </button>
@@ -120,11 +150,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <p className="text-[11px] text-muted">Budget alerts & updates</p>
               </div>
             </div>
-            <div className="w-12 h-6 bg-mint rounded-full relative">
-              <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
-            </div>
+            <button
+              className={`w-12 h-6 rounded-full relative ${notificationsEnabled ? 'bg-mint' : 'bg-slate-200'}`}
+              onClick={() => setNotificationsEnabled((current) => !current)}
+            >
+              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm ${notificationsEnabled ? 'right-1' : 'left-1'}`} />
+            </button>
           </div>
-          <button className="w-full text-left p-4 hover:bg-slate-50 transition-colors flex items-center justify-between">
+          <button className="w-full text-left p-4 hover:bg-slate-50 transition-colors flex items-center justify-between" onClick={onNavigateFamily}>
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-ink">
                 <Users size={20} />
@@ -162,16 +195,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Footer */}
       <div className="pt-4 flex flex-col items-center gap-6 pb-4">
-        <button className="text-red-500 font-medium text-sm flex items-center gap-2 px-4 py-2 rounded-full hover:bg-red-50 transition-colors">
+        <button
+          className="text-red-500 font-medium text-sm flex items-center gap-2 px-4 py-2 rounded-full hover:bg-red-50 transition-colors"
+          onClick={() => onShowNotice?.('Sign-out is intentionally disabled in this web demo.')}
+        >
           <LogOut size={18} />
           Log Out
         </button>
         <div className="text-center space-y-1">
           <p className="text-xs text-muted font-mono">MintLedger v2.4.0 (Build 492)</p>
           <div className="flex justify-center gap-4 text-xs text-muted/60">
-            <a className="hover:text-mint" href="#">Terms</a>
+            <button className="hover:text-mint" onClick={() => onShowNotice?.('Terms link will point to the product site later.')}>Terms</button>
             <span>•</span>
-            <a className="hover:text-mint" href="#">Privacy Policy</a>
+            <button className="hover:text-mint" onClick={() => onShowNotice?.('Privacy policy link will point to the product site later.')}>Privacy Policy</button>
           </div>
         </div>
       </div>

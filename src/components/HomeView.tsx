@@ -54,12 +54,19 @@ const ErrorBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const HomeView: React.FC = () => {
+interface HomeViewProps {
+  onOpenFamily?: () => void;
+  onShowNotice?: (message: string) => void;
+}
+
+export const HomeView: React.FC<HomeViewProps> = ({ onOpenFamily, onShowNotice }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const { weekday, dayMonth } = getTodayLabel();
+  const visibleTransactions = showAll ? transactions : transactions.slice(0, 3);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -85,7 +92,10 @@ export const HomeView: React.FC = () => {
           <span className="text-xs font-bold uppercase tracking-wider text-muted font-display">{weekday}</span>
           <h1 className="text-2xl font-bold font-display text-ink leading-none mt-1">{dayMonth}</h1>
         </div>
-        <button className="relative">
+        <button
+          className="relative"
+          onClick={() => onShowNotice?.('Profile editing stays in the native app flow for now.')}
+        >
           <div className="w-10 h-10 rounded-full bg-forest overflow-hidden ring-2 ring-transparent hover:ring-mint transition-all">
             <img alt="Profile" className="w-full h-full object-cover" src="https://picsum.photos/seed/profile/200" referrerPolicy="no-referrer" />
           </div>
@@ -108,13 +118,23 @@ export const HomeView: React.FC = () => {
 
       <div className="flex p-1 bg-slate-100 rounded-[20px] mx-auto w-full max-w-[280px]">
         <button className="flex-1 py-2 text-sm font-semibold text-forest bg-white rounded-[18px] shadow-sm">Personal</button>
-        <button className="flex-1 py-2 text-sm font-medium text-muted hover:text-ink">Family</button>
+        <button
+          className="flex-1 py-2 text-sm font-medium text-muted hover:text-ink"
+          onClick={() => onOpenFamily?.()}
+        >
+          Family
+        </button>
       </div>
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between px-2">
           <h3 className="text-lg font-bold font-display text-ink">Recent Activity</h3>
-          <button className="text-sm font-medium text-mint hover:text-mint-dark">View All</button>
+          <button
+            className="text-sm font-medium text-mint hover:text-mint-dark"
+            onClick={() => setShowAll((current) => !current)}
+          >
+            {showAll ? 'Show Less' : 'View All'}
+          </button>
         </div>
 
         {loading && (
@@ -127,7 +147,7 @@ export const HomeView: React.FC = () => {
 
         {!loading && error && <ErrorBanner onRetry={fetchTransactions} />}
 
-        {!loading && !error && transactions.map((tx) => {
+        {!loading && !error && visibleTransactions.map((tx) => {
           const Icon: IconComponent = ICON_MAP[tx.category] ?? ShoppingBasket;
           return (
             <div key={tx.id} className="group flex items-center justify-between p-4 bg-white rounded-[20px] hover:shadow-md transition-all border border-transparent hover:border-mint/10 cursor-pointer">
@@ -146,6 +166,12 @@ export const HomeView: React.FC = () => {
             </div>
           );
         })}
+
+        {!loading && !error && transactions.length > 3 && !showAll && (
+          <p className="px-2 text-xs text-muted">
+            Showing 3 of {transactions.length} recent transactions.
+          </p>
+        )}
       </div>
     </div>
   );

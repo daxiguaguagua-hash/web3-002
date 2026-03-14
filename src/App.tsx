@@ -6,7 +6,7 @@
  * PRD §5: Web端仅展示/演示，不登录、不接真实用户数据、不请求账本后端
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HomeView } from './components/HomeView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { FamilyView } from './components/FamilyView';
@@ -26,28 +26,80 @@ function AppShell() {
   const [isPinOpen, setIsPinOpen] = useState(false);
   const [isPrivacyUnlocked, setIsPrivacyUnlocked] = useState(false);
   const [isFxModalOpen, setIsFxModalOpen] = useState(false);
+  const [demoNotice, setDemoNotice] = useState('');
+
+  useEffect(() => {
+    if (!demoNotice) return;
+    const timer = window.setTimeout(() => setDemoNotice(''), 2400);
+    return () => window.clearTimeout(timer);
+  }, [demoNotice]);
+
+  const showNotice = (message: string) => setDemoNotice(message);
 
   const renderView = () => {
     switch (activeTab) {
-      case 'home': return <HomeView />;
-      case 'analytics': return <AnalyticsView />;
-      case 'family': return <FamilyView />;
+      case 'home':
+        return (
+          <HomeView
+            onOpenFamily={() => setActiveTab('family')}
+            onShowNotice={showNotice}
+          />
+        );
+      case 'analytics':
+        return (
+          <AnalyticsView
+            onBackHome={() => setActiveTab('home')}
+            onShowNotice={showNotice}
+          />
+        );
+      case 'family':
+        return (
+          <FamilyView
+            onBackHome={() => setActiveTab('home')}
+            onShowNotice={showNotice}
+          />
+        );
       case 'settings':
         return (
           <SettingsView
             isPrivacyUnlocked={isPrivacyUnlocked}
             onOpenPrivacy={() => {
-              if (!isPrivacyUnlocked) setIsPinOpen(true);
+              if (!isPrivacyUnlocked) {
+                setIsPinOpen(true);
+                return;
+              }
+              showNotice('Privacy ledger is already unlocked.');
             }}
             onShowFxDemo={() => setIsFxModalOpen(true)}
+            onNavigateFamily={() => setActiveTab('family')}
+            onShowNotice={showNotice}
           />
         );
-      default: return <HomeView />;
+      default:
+        return (
+          <HomeView
+            onOpenFamily={() => setActiveTab('family')}
+            onShowNotice={showNotice}
+          />
+        );
     }
   };
 
   return (
     <div className="w-full h-full bg-canvas flex flex-col relative overflow-hidden">
+      <AnimatePresence>
+        {demoNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="absolute top-4 left-4 right-4 z-50 rounded-2xl bg-forest px-4 py-3 text-sm font-medium text-white shadow-lg shadow-forest/20"
+          >
+            {demoNotice}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="flex-1 overflow-y-auto no-scrollbar pb-32 px-6 pt-4">
         <AnimatePresence mode="wait">
           <motion.div
@@ -94,6 +146,19 @@ function AppShell() {
 // ─── Web Landing Page ────────────────────────────────────────────────────────
 
 export default function App() {
+  const launchDemo = (tab: 'home' | 'analytics') => {
+    const container = document.getElementById('app-demo');
+    container?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    window.setTimeout(() => {
+      const navLabel = tab === 'home' ? 'Home' : 'Analytics';
+      const target = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent?.trim() === navLabel,
+      );
+      target?.click();
+    }, 450);
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-start"
@@ -140,24 +205,26 @@ export default function App() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={() => launchDemo('home')}
               className="inline-flex items-center gap-2 px-6 py-3.5 bg-forest text-white font-semibold rounded-2xl hover:bg-forest/90 transition-colors shadow-lg shadow-forest/20"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
               </svg>
-              Download for iOS
-            </a>
-            <a
-              href="#"
+              Open iOS-style demo
+            </button>
+            <button
+              type="button"
+              onClick={() => launchDemo('analytics')}
               className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-forest font-semibold rounded-2xl hover:bg-slate-50 transition-colors border border-slate-200 shadow-sm"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M3.18 23.76c.3.17.66.19.99.03l13.12-7.38-2.8-2.8-11.31 10.15zM.5 1.41C.19 1.76 0 2.3 0 3.01v17.98c0 .71.19 1.25.5 1.6l.08.08L10.12 12v-.24L.58 1.33l-.08.08zM20.35 10.28l-2.86-1.61-3.2 3.2 3.2 3.2 2.89-1.63c.82-.46.82-1.22-.03-1.68v.01-.49zM3.18.24L16.3 7.62l-2.8 2.8L3.18.32V.24z"/>
               </svg>
-              Download for Android
-            </a>
+              Jump to analytics
+            </button>
           </div>
         </motion.div>
 
@@ -167,6 +234,7 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
           className="flex-shrink-0"
+          id="app-demo"
         >
           <PhoneFrame>
             <AppShell />

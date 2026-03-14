@@ -39,10 +39,22 @@ const ErrorBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const AnalyticsView: React.FC = () => {
+interface AnalyticsViewProps {
+  onBackHome?: () => void;
+  onShowNotice?: (message: string) => void;
+}
+
+const PERIOD_META = {
+  week: { totalSpent: '$640', delta: '4%', shopping: '38%', housing: '22%' },
+  month: { totalSpent: '$2,450', delta: '12%', shopping: '45%', housing: '25%' },
+  year: { totalSpent: '$28,900', delta: '9%', shopping: '41%', housing: '29%' },
+} as const;
+
+export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ onBackHome, onShowNotice }) => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [period, setPeriod] = useState<keyof typeof PERIOD_META>('month');
 
   const fetchBudgets = async () => {
     setLoading(true);
@@ -61,22 +73,45 @@ export const AnalyticsView: React.FC = () => {
     fetchBudgets();
   }, []);
 
+  const periodMeta = PERIOD_META[period];
+
+  const selectPeriod = (nextPeriod: keyof typeof PERIOD_META) => {
+    setPeriod(nextPeriod);
+    onShowNotice?.(`Analytics switched to ${nextPeriod} view.`);
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-center justify-between py-2">
-        <button className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-ink">
+        <button
+          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-ink"
+          onClick={onBackHome}
+        >
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-display font-bold text-2xl tracking-tight">Financial Vitals</h1>
-        <button className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-ink">
+        <button
+          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-ink"
+          onClick={() => onShowNotice?.('More analytics actions can branch from this menu later.')}
+        >
           <MoreHorizontal size={20} />
         </button>
       </header>
 
       <div className="bg-slate-100 p-1 rounded-xl flex items-center">
-        <button className="flex-1 py-1.5 text-[13px] font-semibold text-muted">Week</button>
-        <button className="flex-1 py-1.5 text-[13px] font-bold text-mint bg-white shadow-sm rounded-lg">Month</button>
-        <button className="flex-1 py-1.5 text-[13px] font-semibold text-muted">Year</button>
+        {(['week', 'month', 'year'] as const).map((option) => (
+          <button
+            key={option}
+            className={`flex-1 py-1.5 text-[13px] rounded-lg transition-colors ${
+              period === option
+                ? 'font-bold text-mint bg-white shadow-sm'
+                : 'font-semibold text-muted'
+            }`}
+            onClick={() => selectPeriod(option)}
+          >
+            {option.charAt(0).toUpperCase() + option.slice(1)}
+          </button>
+        ))}
       </div>
 
       <section className="bg-white rounded-3xl p-6 shadow-sm flex flex-col items-center">
@@ -88,21 +123,21 @@ export const AnalyticsView: React.FC = () => {
           </svg>
           <div className="absolute flex flex-col items-center">
             <span className="text-muted text-[11px] font-bold uppercase tracking-widest">Total Spent</span>
-            <span className="font-display text-4xl font-bold text-ink">$2,450</span>
+            <span className="font-display text-4xl font-bold text-ink">{periodMeta.totalSpent}</span>
             <div className="flex items-center gap-1 mt-2 text-mint font-bold text-sm">
               <TrendingDown size={14} />
-              <span>12%</span>
+              <span>{periodMeta.delta}</span>
             </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-x-8 gap-y-3 mt-6 pt-6 border-t border-slate-50 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-mint" /><span className="text-[13px] text-muted">Shopping</span></div>
-            <span className="text-[13px] font-semibold">45%</span>
+            <span className="text-[13px] font-semibold">{periodMeta.shopping}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-forest" /><span className="text-[13px] text-muted">Housing</span></div>
-            <span className="text-[13px] font-semibold">25%</span>
+            <span className="text-[13px] font-semibold">{periodMeta.housing}</span>
           </div>
         </div>
       </section>
@@ -110,7 +145,12 @@ export const AnalyticsView: React.FC = () => {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-display font-semibold text-xl text-ink">Budget Status</h2>
-          <button className="text-mint text-sm font-medium">Edit Limits</button>
+          <button
+            className="text-mint text-sm font-medium"
+            onClick={() => onShowNotice?.('Budget limit editing is queued for the next demo pass.')}
+          >
+            Edit Limits
+          </button>
         </div>
         <div className="space-y-4">
           {loading && (
